@@ -18,14 +18,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /* class to demonstrate use of Gmail list labels API */
-public class GmailQuickstart {
+public class GoogleAuthHelper {
     /**
      * Application name.
      */
+
+
+    private static Gmail service;
     private static final String APPLICATION_NAME = "Gmail API Java Quickstart";
     /**
      * Global instance of the JSON factory.
@@ -56,7 +58,7 @@ public class GmailQuickstart {
     private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT)
             throws IOException {
         // Load client secrets.
-        InputStream in = GmailQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+        InputStream in = GoogleAuthHelper.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
         if (in == null) {
             throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
         }
@@ -78,56 +80,13 @@ public class GmailQuickstart {
     public static void main(String... args) throws IOException, GeneralSecurityException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+        service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
 
-        // Print the labels in the user's account.
-        String user = "me";
-        ListLabelsResponse listResponse = service.users().labels().list(user).execute();
-        List<Label> labels = listResponse.getLabels();
-        if (labels.isEmpty()) {
-            System.out.println("No labels found.");
-        } else {
-            System.out.println("Labels:");
-            for (Label label : labels) {
-                System.out.printf("- %s\n", label.getName());
-            }
-        }
     }
 
-    public static void listUnreadTickets(Gmail service)
-    {
-
-    }
-
-    public static void searchTickets(Gmail service, String query)
-    {
-
-    }
-
-    public static void readTicket(Gmail service, String messageId)
-    {
-
-    }
-
-    public static void replyToTicket(Gmail service, String messageId, String replyBody)
-    {
-
-    }
-
-    public static void applyLabel(Gmail service, String messageId, String labelName)
-    {
-
-    }
-
-    public static void trashTicket(Gmail service, String messageId)
-    {
-
-    }
-
-    public static void runMenu(Gmail service)
-    {
-
+    public static Gmail getService() {
+        return service;
     }
 }
