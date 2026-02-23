@@ -83,6 +83,9 @@ public class GoogleAuthHelper {
         service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+        HelpDeskBot.listUnreadTickets(service);
+        HelpDeskBot.searchTickets(service, "label:spam");
+        HelpDeskBot.readTicket(service, "183d2b48-a346-4bf3-90fa-c4835868bd7c@technolutions.net");
 
     }
 
