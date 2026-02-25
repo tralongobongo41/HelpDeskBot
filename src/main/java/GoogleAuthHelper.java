@@ -12,6 +12,8 @@ import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.ListLabelsResponse;
+import jakarta.mail.MessagingException;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,16 +79,26 @@ public class GoogleAuthHelper {
         return credential;
     }
 
-    public static void main(String... args) throws IOException, GeneralSecurityException {
+    public static void main(String... args) throws IOException, GeneralSecurityException, MessagingException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
-        HelpDeskBot.listUnreadTickets(service);
-        HelpDeskBot.searchTickets(service, "label:spam");
-        HelpDeskBot.readTicket(service, "183d2b48-a346-4bf3-90fa-c4835868bd7c@technolutions.net");
 
+
+        //HelpDeskBot.listUnreadTickets(service);
+
+        //HelpDeskBot.searchTickets(service, "label:spam");
+
+        //HelpDeskBot.readTicket(service, "19c964c9d959a3e6");
+
+        //HelpDeskBot.searchTickets(service, "from: matthew.spina@saintandrews.net");
+
+        //String bodyText = "Hello, thank you for the email. Unfortunately, at this time Aaron will not be providing feedback to anyone by the name of Matthew.";
+        //HelpDeskBot.replyToTicket(service, "19c966f4a7b39151", bodyText);
+
+        HelpDeskBot.applyLabel(service, "19c966f4a7b39151", "Spina");
     }
 
     public static Gmail getService() {
