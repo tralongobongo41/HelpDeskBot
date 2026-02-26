@@ -311,6 +311,7 @@ public class HelpDeskBot {
                         System.out.println("Enter message ID to read: ");
                         String readMessageID = scanner.nextLine();
                         HelpDeskBot.readTicket(service, readMessageID);
+                        break;
 
                     case "4":
                         System.out.println("Enter message ID to reply to: ");
