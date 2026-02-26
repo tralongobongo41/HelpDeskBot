@@ -275,28 +275,88 @@ public class HelpDeskBot {
         System.out.println("Message (ID: " + messageId + ") moved to Trash (30-day retention). This action is reversible.");
     }
 
-    public static void runMenu(Gmail service) throws IOException {
+    public static void runMenu(Gmail service) throws IOException, MessagingException {
         Scanner scanner = new Scanner(System.in);
         boolean isRunning = true;
 
-        while(isRunning)
-        {
-            System.out.println("\n----------------------------------");
-            System.out.println("           Help-Desk Bot           ");
-            System.out.println("----------------------------------");
-            System.out.println("1. List unread tickets");
-            System.out.println("2. Search tickets");
-            System.out.println("3. Read full ticket");
-            System.out.println("4. Reply to ticket");
-            System.out.println("5. Label ticket IN_PROGRESS");
-            System.out.println("6. Trash a ticket");
-            System.out.println("0. Exit");
-            System.out.println("----------------------------------");
-            System.out.println("Choice: ");
+        try {
+            while (isRunning) {
+                System.out.println("\n----------------------------------");
+                System.out.println("           Help-Desk Bot           ");
+                System.out.println("----------------------------------");
+                System.out.println("1. List unread tickets");
+                System.out.println("2. Search tickets");
+                System.out.println("3. Read full ticket");
+                System.out.println("4. Reply to ticket");
+                System.out.println("5. Label ticket IN_PROGRESS");
+                System.out.println("6. Trash a ticket");
+                System.out.println("0. Exit");
+                System.out.println("----------------------------------");
+                System.out.println("Choice: ");
 
-            String choice = scanner.nextLine().trim();
+                String choice = scanner.nextLine().trim();
 
-            isRunning = false;
+                switch (choice) {
+                    case "1":
+                        listUnreadTickets(service);
+                        break;
+
+                    case "2":
+                        System.out.println("Enter search query: ");
+                        String query = scanner.nextLine();
+                        searchTickets(service, query);
+                        break;
+
+                    case "3":
+                        System.out.println("Enter message ID to read: ");
+                        String readMessageID = scanner.nextLine();
+                        HelpDeskBot.readTicket(service, readMessageID);
+
+                    case "4":
+                        System.out.println("Enter message ID to reply to: ");
+                        String replyMessageID = scanner.nextLine();
+
+                        System.out.println("Enter reply text");
+                        String replyBody = scanner.nextLine();
+
+                        replyToTicket(service, replyMessageID, replyBody);
+
+                        break;
+
+                    case "5":
+                        System.out.println("Enter message ID to label IN_PROGRESS: ");
+                        String labelMessageID = scanner.nextLine();
+
+                        applyLabel(service, labelMessageID, "IN_PROGRESS");
+
+                        break;
+
+                    case "6":
+                        System.out.println("Enter message ID to trash: ");
+                        String trashMessageID = scanner.nextLine();
+
+                        System.out.println("Are you sure? (y/n): ");
+                        String confirmation = scanner.nextLine();
+
+                        if (confirmation.equalsIgnoreCase("y"))
+                            trashTicket(service, trashMessageID);
+                        else
+                            System.out.println("Trash cancelled.");
+                        break;
+
+                    case "0":
+                        isRunning = false;
+                        System.out.println("Exiting program");
+                        break;
+
+                    default:
+                        System.out.println("Invalid input. Please choose 0-6.");
+
+                }
+            }
+            scanner.close();
+        } catch (Exception e) {
+            System.out.println("Error occured: " + e.getMessage());
         }
     }
 }
