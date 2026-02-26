@@ -12,10 +12,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.Properties;
+import java.util.*;
 
 
 public class HelpDeskBot {
@@ -38,7 +35,44 @@ public class HelpDeskBot {
         for (Message msgRef : unreadResponses.getMessages()) {
             count++;
 
-            System.out.println("Message ID: " + msgRef.getId());
+            Message fullMsg = service.users().messages()
+                    .get("me", msgRef.getId())
+                    .setFormat("metadata")
+                    .setMetadataHeaders(Arrays.asList("Subject", "From"))
+                    .execute();
+
+
+            String subject = fullMsg.getPayload().getHeaders()
+                    .stream()
+                    .filter(h -> "Subject".equals(h.getName()))
+                    .map(h -> h.getValue())
+                    .findFirst()
+                    .orElse("(no subject)");
+
+            String from = fullMsg.getPayload().getHeaders()
+                    .stream()
+                    .filter(h -> "From".equals(h.getName()))
+                    .map(h -> h.getValue())
+                    .findFirst()
+                    .orElse("(no sender)");
+
+            System.out.println(count + ". Subject: " + subject + " || From: " + from + " || Message ID: " + msgRef.getId());
+        }
+        System.out.println("------------------------------------------------------");
+    }
+
+    public static void searchTickets(Gmail service, String query) throws IOException {
+        ListMessagesResponse searchResponse = service.users().messages()
+                .list("me")
+                .setQ(query)
+                .setMaxResults(20L)
+                .execute();
+
+        int count = 0;
+
+        System.out.println("--- Custom Query: " + query + " (latest 20) -----------------------");
+        for (Message msgRef : searchResponse.getMessages()) {
+            count++;
 
             Message fullMsg = service.users().messages()
                     .get("me", msgRef.getId())
@@ -61,55 +95,11 @@ public class HelpDeskBot {
                     .findFirst()
                     .orElse("(no sender)");
 
-            System.out.println(count + ". Subject: " + subject + " || From: " + from);
-        }
-        System.out.println("------------------------------------------------------");
-    }
+            String snippet = fullMsg.getSnippet();
+            if(snippet == null)
+                snippet = "(no snippet)";
 
-    public static void searchTickets(Gmail service, String query) throws IOException {
-        ListMessagesResponse searchResponse = service.users().messages()
-                .list("me")
-                .setQ(query)
-                .setMaxResults(20L)
-                .execute();
-
-        int count = 0;
-
-        System.out.println("--- Custom Query: " + query + " (latest 20) -----------------------");
-        for (Message msgRef : searchResponse.getMessages()) {
-            count++;
-
-            System.out.println("Message ID: " + msgRef.getId());
-
-            Message fullMsg = service.users().messages()
-                    .get("me", msgRef.getId())
-                    .setFormat("metadata")
-                    .setMetadataHeaders(Arrays.asList("Subject", "From", "Snippet"))
-                    .execute();
-
-
-            String subject = fullMsg.getPayload().getHeaders()
-                    .stream()
-                    .filter(h -> "Subject".equals(h.getName()))
-                    .map(h -> h.getValue())
-                    .findFirst()
-                    .orElse("(no subject)");
-
-            String from = fullMsg.getPayload().getHeaders()
-                    .stream()
-                    .filter(h -> "From".equals(h.getName()))
-                    .map(h -> h.getValue())
-                    .findFirst()
-                    .orElse("(no sender)");
-
-            String snippet = fullMsg.getPayload().getHeaders()
-                    .stream()
-                    .filter(h -> "Snippet".equals(h.getName()))
-                    .map(h -> h.getValue())
-                    .findFirst()
-                    .orElse("(no snippet)");
-
-            System.out.println(count + ". Subject: " + subject + " || From: " + from + "Snippet: " + snippet);
+            System.out.println(count + ". Subject: " + subject + " || From: " + from + "Snippet: " + snippet + " || Message ID: " + msgRef.getId());
         }
         System.out.println("------------------------------------------------------");
     }
@@ -161,13 +151,15 @@ public class HelpDeskBot {
         Message message = service.users().messages()
                 .get("me", messageId)
                 .setFormat("metadata")
-                .setMetadataHeaders(Arrays.asList("Subject", "From", "Message-ID", "threadId"))
+                .setMetadataHeaders(Arrays.asList("Subject", "From", "Message-ID"))
                 .execute();
 
         if(message.isEmpty()) {
             System.out.println("No message found");
             return;
         }
+
+        String threadId = message.getThreadId();
 
         String subject = message.getPayload().getHeaders()
                 .stream()
@@ -183,19 +175,12 @@ public class HelpDeskBot {
                 .findFirst()
                 .orElse("(no sender)");
 
-        String messageID = message.getPayload().getHeaders()
+        String originalMessageID = message.getPayload().getHeaders()
                 .stream()
                 .filter(h -> "Message-ID".equals(h.getName()))
                 .map(h -> h.getValue())
                 .findFirst()
-                .orElse("(no subject)");
-
-        String threadID = message.getPayload().getHeaders()
-                .stream()
-                .filter(h -> "threadID".equals(h.getName()))
-                .map(h -> h.getValue())
-                .findFirst()
-                .orElse("(no subject)");
+                .orElse("(no message ID found)");
 
 
         // Step 1: Create a MIME message using Jakarta Mail
@@ -204,8 +189,17 @@ public class HelpDeskBot {
         MimeMessage email = new MimeMessage(session);
         email.setFrom(new InternetAddress("me"));           // "me" = authenticated user
         email.addRecipient(jakarta.mail.Message.RecipientType.TO,new InternetAddress(from));
-        email.setSubject("Re: " + subject);
+
+        if(!subject.toLowerCase().startsWith("re:"))
+        {
+            subject = "Re: " + subject;
+        }
+
+        email.setSubject(subject);
         email.setText(replyBody);                            // plain-text body
+
+        email.setHeader("In-Reply-To", originalMessageID);
+        email.setHeader("References", originalMessageID);
 
         // Step 2: Serialize the MimeMessage to bytes
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -219,34 +213,46 @@ public class HelpDeskBot {
         // Step 4: Wrap in a Gmail API Message and send
         Message newMessage = new Message();
         newMessage.setRaw(encodedEmail);
+        newMessage.setThreadId(threadId);
+
         newMessage = service.users().messages()
                 .send("me", newMessage)
                 .execute();
 
-        System.out.println("Message sent. ID: " + newMessage.getId());
+        System.out.println("Reply sent. ID: " + newMessage.getId());
     }
 
     public static void applyLabel(Gmail service, String messageId, String labelName) throws IOException {
+        String labelID = "";
+
         // List all labels — both system and custom
         var labels = service.users().labels().list("me").execute();
         for (Label label : labels.getLabels()) {
             System.out.println(label.getName() + " - " + label.getId());
+            if(label.getName().equals(labelName)) {
+                labelID = label.getId();
+                System.out.println("Label exists. LabelID: " + labelID);
+            }
             // getName() ? "IN_PROGRESS" or "INBOX" etc.
             // getId()   ? "Label_12345" or "INBOX" etc.
         }
 
-        Label newLabel = new Label()
-                .setName(labelName)
-                .setLabelListVisibility("labelShow")      // show in the Gmail sidebar
-                .setMessageListVisibility("show");        // show on messages in the list
+        if(labelID.isEmpty())
+        {
+            Label newLabel = new Label()
+                    .setName(labelName)
+                    .setLabelListVisibility("labelShow")      // show in the Gmail sidebar
+                    .setMessageListVisibility("show");        // show on messages in the list
 
-        Label created = service.users().labels()
-                .create("me", newLabel)
-                .execute();
+            Label created = service.users().labels()
+                    .create("me", newLabel)
+                    .execute();
 
-        String labelID = created.getId();
+            labelID = created.getId();
 
-        System.out.println("Created label ID: " + labelID);  // save this ID for later use
+            System.out.println("Created label ID: " + labelID);  // save this ID for later use
+
+        }
 
         // labelId comes from listing or creating labels above
         ModifyMessageRequest request = new ModifyMessageRequest()
@@ -261,10 +267,36 @@ public class HelpDeskBot {
     }
 
     public static void trashTicket(Gmail service, String messageId) throws IOException {
+        // Move message to trash (recoverable for 30 days)
+        service.users().messages()
+                .trash("me", messageId)
+                .execute();
 
+        System.out.println("Message (ID: " + messageId + ") moved to Trash (30-day retention). This action is reversible.");
     }
 
     public static void runMenu(Gmail service) throws IOException {
+        Scanner scanner = new Scanner(System.in);
+        boolean isRunning = true;
 
+        while(isRunning)
+        {
+            System.out.println("\n----------------------------------");
+            System.out.println("           Help-Desk Bot           ");
+            System.out.println("----------------------------------");
+            System.out.println("1. List unread tickets");
+            System.out.println("2. Search tickets");
+            System.out.println("3. Read full ticket");
+            System.out.println("4. Reply to ticket");
+            System.out.println("5. Label ticket IN_PROGRESS");
+            System.out.println("6. Trash a ticket");
+            System.out.println("0. Exit");
+            System.out.println("----------------------------------");
+            System.out.println("Choice: ");
+
+            String choice = scanner.nextLine().trim();
+
+            isRunning = false;
+        }
     }
 }
