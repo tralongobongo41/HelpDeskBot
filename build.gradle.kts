@@ -23,7 +23,8 @@ dependencies {
     implementation("org.eclipse.angus:angus-mail:2.0.3")
     implementation("jakarta.mail:jakarta.mail-api:2.1.3")
     implementation("org.eclipse.angus:angus-mail:2.0.3")
-
+    implementation("com.google.apis:google-api-services-calendar:v3-rev20240111-2.0.0")
+    implementation("com.google.oauth-client:google-oauth-client-jetty:1.34.1")
 }
 
 

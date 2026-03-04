@@ -1,3 +1,7 @@
+import com.google.api.client.util.DateTime;
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.Events;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.model.Label;
 import com.google.api.services.gmail.model.ListMessagesResponse;
@@ -275,6 +279,42 @@ public class HelpDeskBot {
         System.out.println("Message (ID: " + messageId + ") moved to Trash (30-day retention). This action is reversible.");
     }
 
+
+
+    // PERSONAL METHOD - NOT A PART OF ASSIGNMENT
+    public static void markQueryAsRead(Gmail service, String query1) throws IOException {
+        // Step 1: Search messages matching the query
+        ListMessagesResponse response = service.users().messages()
+                .list("me")
+                .setQ(query1)
+                .setMaxResults(100L)   // adjust as needed
+                .execute();
+
+        if (response.getMessages() == null || response.getMessages().isEmpty()) {
+            System.out.println("No messages found for query: " + query1);
+            return;
+        }
+
+        int count1 = 0;
+
+        // Step 2: Loop through each message and remove the UNREAD label
+        for (Message msg : response.getMessages()) {
+            ModifyMessageRequest mods = new ModifyMessageRequest()
+                    .setRemoveLabelIds(Collections.singletonList("UNREAD"));
+
+            service.users().messages()
+                    .modify("me", msg.getId(), mods)
+                    .execute();
+
+            count1++;
+            System.out.println("Marked as read: " + msg.getId());
+        }
+
+        System.out.println("All messages (" + count1 + ") matching query \"" + query1 + "\" have been marked as read.");
+    }
+
+
+
     public static void runMenu(Gmail service) throws IOException, MessagingException {
         Scanner scanner = new Scanner(System.in);
         boolean isRunning = true;
@@ -290,6 +330,7 @@ public class HelpDeskBot {
                 System.out.println("4. Reply to ticket");
                 System.out.println("5. Label ticket IN_PROGRESS");
                 System.out.println("6. Trash a ticket");
+                System.out.println("7. Mark all messages matching query as read");
                 System.out.println("0. Exit");
                 System.out.println("----------------------------------");
                 System.out.println("Choice: ");
@@ -343,6 +384,13 @@ public class HelpDeskBot {
                             trashTicket(service, trashMessageID);
                         else
                             System.out.println("Trash cancelled.");
+                        break;
+
+                    // PERSONAL METHOD - NOT A PART OF ASSIGNMENT
+                    case "7":
+                        System.out.print("Enter Gmail search query to mark messages as read: ");
+                        String markAsReadQuery = scanner.nextLine();
+                        markQueryAsRead(service, markAsReadQuery);
                         break;
 
                     case "0":

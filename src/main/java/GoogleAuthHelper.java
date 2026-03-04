@@ -8,6 +8,7 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
+import com.google.api.services.calendar.model.CalendarList;
 import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.Label;
@@ -30,6 +31,7 @@ public class GoogleAuthHelper {
 
 
     private static Gmail service;
+
     private static final String APPLICATION_NAME = "Gmail API Java Quickstart";
     /**
      * Global instance of the JSON factory.
@@ -57,7 +59,7 @@ public class GoogleAuthHelper {
      * @return An authorized Credential object.
      * @throws IOException If the credentials.json file cannot be found.
      */
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT)
+    public static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT, List<String> scopes)
             throws IOException {
         // Load client secrets.
         InputStream in = GoogleAuthHelper.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
@@ -69,7 +71,7 @@ public class GoogleAuthHelper {
 
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
+                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, scopes)
                 .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
                 .setAccessType("offline")
                 .build();
@@ -82,7 +84,7 @@ public class GoogleAuthHelper {
     public static void main(String... args) throws IOException, GeneralSecurityException, MessagingException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+        service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT, SCOPES))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
 
