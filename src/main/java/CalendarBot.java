@@ -41,8 +41,15 @@ public class CalendarBot {
                 .setSingleEvents(true)
                 .execute();
 
-        for (Event event : events.getItems()) {
-            System.out.println(event.getSummary() + " @ " + getWhen(event.getStart()) + ";  ID: " + event.getId());  // print ID for delete/patch operations
+        List<Event> items = events.getItems();
+
+        if(items == null || items.isEmpty())
+            System.out.println("No upcoming events.");
+        else
+        {
+            for (Event event : items) {
+                System.out.println(event.getSummary() + " @ " + getWhen(event.getStart()) + ";  ID: " + event.getId());
+            }
         }
     }
 
