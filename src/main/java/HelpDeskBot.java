@@ -405,7 +405,7 @@ public class HelpDeskBot {
             }
             scanner.close();
         } catch (Exception e) {
-            System.out.println("Error occured: " + e.getMessage());
+            System.out.println("Error occurred: " + e.getMessage());
         }
     }
 }

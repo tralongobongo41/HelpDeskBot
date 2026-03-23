@@ -1,13 +1,13 @@
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.model.*;
+import com.google.api.services.gmail.Gmail;
+import jakarta.mail.MessagingException;
 
 import java.io.IOException;
 import java.sql.SQLOutput;
 import java.time.*;
 import java.util.*;
-
-import static java.text.DateFormat.Field.TIME_ZONE;
 
 
 public class CalendarBot {
@@ -36,9 +36,9 @@ public class CalendarBot {
 
         Events events = service.events().list("primary")
                 .setMaxResults(10)
-                .setTimeMin(now)          // only events starting from now
+                .setTimeMin(now)
                 .setOrderBy("startTime")
-                .setSingleEvents(true)    // ← IMPORTANT: see note below
+                .setSingleEvents(true)
                 .execute();
 
         for (Event event : events.getItems()) {
@@ -47,9 +47,15 @@ public class CalendarBot {
     }
 
     //Task 2
-    public static void searchByDateRange(Calendar service, String startDateStr, String endDateStr) throws IOException {
+    public static void searchByDateRange(Calendar service, Scanner scanner) throws IOException {
+        System.out.println("Start Date (yyyy-MM-dd): ");
+        String startDateStr = scanner.nextLine();
+
+        System.out.println("End Date (yyyy-MM-dd): ");
+        String endDateStr = scanner.nextLine();
+
         DateTime start = javaToGoogleTime(LocalDate.parse(startDateStr).atStartOfDay());
-        DateTime end = javaToGoogleTime(LocalDate.parse(endDateStr).atStartOfDay());
+        DateTime end = javaToGoogleTime(LocalDate.parse(endDateStr).atTime(LocalTime.MAX));
 
         Events events = service.events().list("primary")
                 .setMaxResults(10)
@@ -59,8 +65,15 @@ public class CalendarBot {
                 .setSingleEvents(true)
                 .execute();
 
-        for (Event event : events.getItems()) {
-            System.out.println(event.getSummary() + " @ " + getWhen(event.getStart()) + ";  ID: " + event.getId());
+        List<Event> items = events.getItems();
+
+        if(items == null || items.isEmpty())
+            System.out.println("No events found for this date range.");
+        else
+        {
+            for (Event event : items) {
+                System.out.println(event.getSummary() + " @ " + getWhen(event.getStart()) + ";  ID: " + event.getId());
+            }
         }
     }
 
@@ -158,4 +171,70 @@ public class CalendarBot {
     }
 
 
+    public static void runMenu(Calendar service) throws IOException, MessagingException
+    {
+        Scanner scanner = new Scanner(System.in);
+        boolean isRunning = true;
+
+        try {
+            while (isRunning) {
+                System.out.println("\n----------------------------------");
+                System.out.println("           Calendar Bot           ");
+                System.out.println("----------------------------------");
+                System.out.println("1. List upcoming events");
+                System.out.println("2. Search events by date");
+                System.out.println("3. Create an event");
+                System.out.println("4. Check availability");
+                System.out.println("5. Delete an event");
+                System.out.println("6. List all calendars");
+                System.out.println("0. Exit");
+                System.out.println("----------------------------------");
+                System.out.println("Choice: ");
+
+                String choice = scanner.nextLine().trim();
+
+                switch (choice) {
+                    case "1":
+                        CalendarBot.listUpcomingEvents(service);
+                        break;
+
+                    case "2":
+                        CalendarBot.searchByDateRange(service, scanner);
+                        break;
+
+                    case "3":
+                        CalendarBot.createEvent(service, scanner);
+                        break;
+
+                    case "4":
+                        CalendarBot.checkAvailability(service, scanner);
+                        break;
+
+                    case "5":
+                        CalendarBot.deleteEvent(service, scanner);
+                        break;
+
+                    case "6":
+                        CalendarBot.listCalendars(service);
+                        break;
+
+                    case "0":
+                        isRunning = false;
+                        System.out.println("Exiting program");
+                        break;
+
+                    default:
+                        System.out.println("Invalid input. Please choose 0-6.");
+
+
+
+
+                }
+            }
+            scanner.close();
+        } catch (Exception e) {
+            System.out.println("Error occurred: " + e.getMessage());
+        }
+
+    }
 }

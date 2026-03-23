@@ -23,6 +23,8 @@ public class CalendarAuth {
                 GoogleAuthHelper.getCredentials(httpTransport,
                         scopes)).setApplicationName("My Calendar App").build();
 
-        Scanner scanner = new Scanner(System.in);
+
+        CalendarBot.runMenu(service);
+
     }
 }
