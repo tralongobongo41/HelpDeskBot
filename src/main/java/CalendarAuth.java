@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
 
 public class CalendarAuth {
     public static void main(String[] args) throws Exception {
@@ -22,6 +23,6 @@ public class CalendarAuth {
                 GoogleAuthHelper.getCredentials(httpTransport,
                         scopes)).setApplicationName("My Calendar App").build();
 
-        CalendarBot.listUpcomingEvents(service);
+        Scanner scanner = new Scanner(System.in);
     }
 }
