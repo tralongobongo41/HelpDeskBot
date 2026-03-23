@@ -103,6 +103,6 @@ public class GoogleAuthHelper {
 
         //HelpDeskBot.trashTicket(service, "19c7dc83450e2f5f");
 
-        HelpDeskBot.runMenu(service);
+        //HelpDeskBot.runMenu(service);
     }
 }
