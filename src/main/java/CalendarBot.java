@@ -134,6 +134,8 @@ public class CalendarBot {
         DateTime start = javaToGoogleTime(LocalDateTime.parse(date + "T" + startTime));
         DateTime end = javaToGoogleTime(LocalDateTime.parse(date + "T" + endTime));
 
+        System.out.println("Checking: " + date + " " + start + " ? " + end);
+        System.out.println("");
 
         FreeBusyRequest request = new FreeBusyRequest()
                 .setTimeMin(start)
