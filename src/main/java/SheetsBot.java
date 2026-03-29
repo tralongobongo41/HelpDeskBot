@@ -1,6 +1,8 @@
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.*;
@@ -18,12 +20,16 @@ public class SheetsBot {
 
     //Instance variables
     private static String spreadsheetId;
-    private static String sheetName;
+    private static final String NEW_SHEET_NAME = "Sheet1";
 
     //Helper
     public static String getCellValue(List<Object> row, int index)
     {
+        if(row == null || index >= row.size())
+            return "";
 
+        Object value = row.get(index);
+        return (value == null) ? "" : value.toString();
     }
 
     //Task 0
@@ -48,8 +54,9 @@ public class SheetsBot {
             try
             {
                 Spreadsheet sheet = service.spreadsheets().get(inputId).execute();
+                title = sheet.getProperties().getTitle();
                 spreadsheetId = inputId;
-                System.out.println("? Found: " + sheet.getProperties().getTitle());
+                System.out.println("? Found: " + title);
             }
             catch (GoogleJsonResponseException e)
             {
@@ -78,7 +85,7 @@ public class SheetsBot {
                             .setTitle(title))           // the file name in Google Drive
                     .setSheets(List.of(new Sheet()
                             .setProperties(new SheetProperties()
-                                    .setTitle("Sheet1"))));         // the tab name inside the file
+                                    .setTitle(NEW_SHEET_NAME))));         // the tab name inside the file
 
             Spreadsheet created = service.spreadsheets().create(newSpreadsheet).execute();
             spreadsheetId = created.getSpreadsheetId();  // store for all subsequent tasks
@@ -89,11 +96,11 @@ public class SheetsBot {
                     List.of("Name", "Student ID", "Grade", "Score", "Notes")
             );
             service.spreadsheets().values()
-                    .update(spreadsheetId, "Sheet1!A1:E1", new ValueRange().setValues(header))
+                    .update(spreadsheetId, NEW_SHEET_NAME + "!A1:E1", new ValueRange().setValues(header))
                     .setValueInputOption("RAW")
                     .execute();
 
-            System.out.println("Header row written to " + sheetName + "!A1:E1"); //check sheetName!!! *note
+            System.out.println("Header row written to " + NEW_SHEET_NAME + "!A1:E1"); //check sheetName!!! *note
 
             System.out.println("\n? Ready. Working with spreadsheet: " + title);
             System.out.println("(ID: " + spreadsheetId + ")");
@@ -106,8 +113,23 @@ public class SheetsBot {
         }
     }
 
-    public static void displayAllStudents(Sheets service)
-    {
+    public static void displayAllStudents(Sheets service) throws IOException {
+        // Read just cell B2
+        ValueRange singleCell = service.spreadsheets().values()
+                .get(spreadsheetId, "Sheet1!A:E")
+                .execute();
+
+        List<List<Object>> vals = singleCell.getValues();
+
+        if (vals == null || vals.size() <= 1) {
+            System.out.println("No student records found.");
+            return;
+        }
+
+        System.out.println("");
+
+
+
 
     }
 
