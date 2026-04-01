@@ -126,8 +126,22 @@ public class SheetsBot {
             return;
         }
 
-        System.out.println("");
+        System.out.println("\n--- Class Roster (" + + (vals.size() - 1) + "students) --------------------------------");
+        System.out.printf("%-3s | %-16s | %-8s | %-5s | %-5s | %s%n", "#", "Name", "ID", "Grade", "Score", "Notes");
+        System.out.println("----|----------------|--------|-------|-------|---------------------");
 
+        //for(int i = 1; i < vals.size(); i++)
+        //{
+
+        //}
+
+
+                /*1 | Alice Johnson  | S1001  | A     |    95 | Excellent participation
+                2 | Bob Smith      | S1002  | B+    |    87 |
+                3 | Carol White    | S1003  | C     |    72 | Needs tutoring
+                4 | David Lee      | S1004  | A-    |    91 |
+                --------------------------------------------------------------
+                        Total: 4 student(s)*/
 
 
 
