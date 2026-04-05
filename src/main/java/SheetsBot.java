@@ -100,7 +100,7 @@ public class SheetsBot {
                     .setValueInputOption("RAW")
                     .execute();
 
-            System.out.println("Header row written to " + NEW_SHEET_NAME + "!A1:E1"); //check sheetName!!! *note
+            System.out.println("Header row written to " + NEW_SHEET_NAME + "!A1:E1");
 
             System.out.println("\n? Ready. Working with spreadsheet: " + title);
             System.out.println("(ID: " + spreadsheetId + ")");
@@ -130,26 +130,48 @@ public class SheetsBot {
         System.out.printf("%-3s | %-16s | %-8s | %-5s | %-5s | %s%n", "#", "Name", "ID", "Grade", "Score", "Notes");
         System.out.println("----|----------------|--------|-------|-------|---------------------");
 
-        //for(int i = 1; i < vals.size(); i++)
-        //{
+        for(int i = 1; i < vals.size(); i++)
+        {
+            List<Object> row = vals.get(i);
+            String name = getCellValue(row, 0);
+            String id = getCellValue(row, 1);
+            String grade = getCellValue(row, 2);
+            String score = getCellValue(row, 3);
+            String notes = getCellValue(row, 4);
 
-        //}
-
-
-                /*1 | Alice Johnson  | S1001  | A     |    95 | Excellent participation
-                2 | Bob Smith      | S1002  | B+    |    87 |
-                3 | Carol White    | S1003  | C     |    72 | Needs tutoring
-                4 | David Lee      | S1004  | A-    |    91 |
-                --------------------------------------------------------------
-                        Total: 4 student(s)*/
-
-
+            System.out.printf("%-3s | %-16s | %-8s | %-5s | %-5s | %s%n", i, name, id, grade, score, notes);
+        }
+        System.out.println("--------------------------------------------------------------------");
+        System.out.println("Total: " + (vals.size() - 1) + " student(s)");
 
     }
 
-    public static void searchByName(Sheets service, String query)
+    public static void searchByName(Sheets service, String query) throws IOException
     {
+        ValueRange response = service.spreadsheets().values().get(spreadsheetId, NEW_SHEET_NAME + "!A:E").execute();
+        List<List<Object>> allRows = response.getValues();
+        List<List<Object>> matches = new ArrayList<>();
 
+        matches.add(allRows.get(0));
+
+        for(int i = 0; i < allRows.size(); i++)
+        {
+            if(getCellValue(allRows.get(i), 0).toLowerCase().contains(query.toLowerCase()))
+            {
+                List<Object> row = new ArrayList<>(allRows.get(i));
+                row.add(0, i + 1);
+                matches.add(row);
+            }
+        }
+
+        if(matches.size() <= 1)
+        {
+            System.out.println("? Zero matches found for: " + query);
+        }
+        else
+        {
+            System.out.println( (matches.size() - 1) + " match(es) found.");
+        }
     }
 
     public static void addStudent(Sheets service)
